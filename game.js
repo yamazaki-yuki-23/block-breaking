@@ -4,6 +4,8 @@ enchant();
 SPEED_UP = 0.5; //ボールのスピードアップ量
 BALL_SX = 0; //ボールの出現位置のX座標
 BALL_SY = 108; //ボールの出現位置のY座標
+MIN_WIDTH = 0; //画面最小幅
+MAX_WIDTH = 320; //画面最大幅
 
 window.onload = function() {
 
@@ -38,6 +40,11 @@ window.onload = function() {
         //パドルのスプライトを作成する
         //引数は、パドルの初期位置のxy座標
         var paddle = new Paddle(160 - 16, 320 - 32);
+
+        // //コインのスプライトを作成する
+        // //引数は、コインの出現位置のxy座標
+        var x_point = Math.floor(Math.random()* (MAX_WIDTH + 1 - MIN_WIDTH)) + MIN_WIDTH;
+        var coin = new Coin(x_point, 0);
 
         //rootSceneの「enterframe」イベントリスナ
         core.rootScene.addEventListener('enterframe', function(e) {
@@ -104,18 +111,48 @@ window.onload = function() {
                 //ブロックにボールが当たったなら
                 if(blocks[i].intersect(ball)) {
                     //スコアを加算する
+                    tmp_score = core.score;
                     core.score += 100 * core.combo;
+                    block_label_score = core.score - tmp_score;
+
+                    //取得点数を表示
+                    var blockLabel = new Label("+" + block_label_score);
+                    blockLabel = showBlockPoint(blockLabel, blocks[i]);
+                    core.rootScene.addChild(blockLabel);
+                    setTimeout(function() {
+                        core.rootScene.removeChild(blockLabel);
+                    }, 500);
+
                     //当たったブロックを消す
                     blocks[i].remove();
                     //ボールを打ち返す
                     ball.vy *= -1;
                     //ブロックの総数をデクリメントする
-                    core.blockCount--+
+                    core.blockCount--;
                     //コンボ数(連続して消去されたブロック数)をカウントする
                     core.combo++;
                     //スコアの表示を更新する
                     scoreLabel.score = core.score;
                 }
+            }
+
+            // //パドルとコインの当たり判定
+            if(coin.intersect(paddle)) {
+                //取得点数を表示
+                if(coin.x > 300) coin.x = 300;
+                var coinLabel = new Label("+100");
+                coinLabel = showCoinPoint(coinLabel, coin);
+                core.rootScene.addChild(coinLabel);
+                setTimeout(function() {
+                    core.rootScene.removeChild(coinLabel);
+                }, 1000);
+
+                //当たったコインを消す
+                coin.remove();
+                var x_point = Math.floor(Math.random()* (MAX_WIDTH + 1 - MIN_WIDTH)) + MIN_WIDTH;
+                coin = new Coin(x_point,0);
+                core.score += 100;
+                scoreLabel.score += 100;
             }
 
             //面クリア処理
@@ -143,8 +180,15 @@ window.onload = function() {
                     ball.vx = ball.vy = 4;
                 }else {
                     //ライフが残っていないならゲームオーバー
+                    coin.remove();
                     core.end();
                 }
+            }
+
+            if(coin.y > 320) {
+                coin.remove();
+                var x_point = Math.floor(Math.random()* (MAX_WIDTH + 1 - MIN_WIDTH)) + MIN_WIDTH;
+                coin = new Coin(x_point,0);
             }
         });
 
@@ -163,6 +207,24 @@ window.onload = function() {
         lifeLabel.heart[1].frame = 31;
         lifeLabel.heart[2].frame = 31;
         core.rootScene.addChild(lifeLabel);
+
+        //ボールがブロックに当たっときに点数を表示する
+        function showBlockPoint(blockLabel, block) {
+            blockLabel.font  = "8px sens-serif";
+            blockLabel.color = "red";
+            blockLabel.x     = block.x;
+            blockLabel.y     = block.y;
+            return blockLabel;
+        }
+
+        //パドルにコインが当たっときに点数を表示する
+        function showCoinPoint(coinLabel, coin) {
+            coinLabel.font  = "8px sens-serif";
+            coinLabel.color = "red";
+            coinLabel.x     = coin.x;
+            coinLabel.y     = coin.y;
+            return coinLabel;
+        }
 
     }
     core.start();
@@ -247,6 +309,31 @@ var Block = enchant.Class.create(enchant.Sprite, {
         //このキーのブロックを配列から削除する
         delete blocks[this.key];
         //このブロックを削除する
+        delete this;
+    }
+});
+
+//コインのスプライト作成するクラス
+var Coin = enchant.Class.create(enchant.Sprite, {
+    //「initialize」メソッド(コンストラクタ)
+    initialize: function(x, y){
+        //継承元をコール
+        enchant.Sprite.call(this,5, 5);
+        this.backgroundColor = "yellow";
+        this.x    = x; //x座標
+        this.y    = y; //y座標
+        this.down = 2; //落下速度
+        core.rootScene.addChild(this);
+        // 「enterframe」イベントリスナ
+        this.addEventListener('enterframe', function(e) {
+            //アイテムの移動処理
+            this.y += this.down;
+        })
+    },
+    remove: function() {
+        //このスプライトをrootSceneから削除する
+        core.rootScene.removeChild(this);
+        //このスプライトを削除する
         delete this;
     }
 });
