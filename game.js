@@ -11,26 +11,18 @@ window.onload = function() {
 
     core = new Core(320, 320);
     core.fps = 16;
-
-    //ライフ数(ボール数)を格納するプロパティ
-    core.life = 3;
-    //スコアを格納するプロパティ
-    core.score = 0;
-
-    //面クリアフラグ(1面をクリアしたかどうかの状態を表す)
-    core.clear = true;
-    //コンボ数を格納するプロパティ
-    core.combo = 1;
+    core.life = 3; //ライフ数(ボール数)を格納するプロパティ
+    core.score = 0; //スコアを格納するプロパティ
+    core.clear = true; //面クリアフラグ(1面をクリアしたかどうかの状態を表す)
+    core.combo = 1; //コンボ数を格納するプロパティ
+    core.preload('icon0.png'); //ゲームで使用する画像ファイルを読み込む
 
     core.onload = function() {
 
         //バックグラウンドのスプライトを作成する
         var bg = new Sprite(320, 320);
-        //バックグラウンドの背景色を灰色に設定
         bg.backgroundColor = "#707070";
         core.rootScene.addChild(bg);
-
-        //ブロックを格納する配列を定義する
         blocks = [];
 
         //ボールのスプライトを作成する
@@ -65,14 +57,12 @@ window.onload = function() {
                         block.key = key;
                         //ブロックを配列に格納する
                         blocks[key] = block;
-                        //インデックスキーをインクリメントする
                         key++;
                     }
                 }
 
                 //「blockCount」プロパティにインデックスキーの最終値(ブロックの総数)を代入する
                 core.blockCount = key;
-                //面クリアフラグを「false」にする
                 core.clear = false;
 
                 //ボールのxy方向の移動量を初期化する
@@ -236,7 +226,12 @@ var Ball = enchant.Class.create(enchant.Sprite, {
     initialize: function(x, y) {
         //継承元をコール
         enchant.Sprite.call(this, 8, 8);
-        this.backgroundColor = "#FFFFFF"; //背景色
+        var surface = new Surface(8, 8);
+        surface.context.beginPath();
+        surface.context.arc(8*0.5, 8*0.5, 8*0.5, 0, Math.PI*2, false);
+        surface.context.fillStyle = "#FFFFFF";
+        surface.context.fill();
+        this.image = surface;
         this.x = x; //x座標
         this.y = y; //y座標
         this.speed; //スピード
@@ -318,11 +313,12 @@ var Coin = enchant.Class.create(enchant.Sprite, {
     //「initialize」メソッド(コンストラクタ)
     initialize: function(x, y){
         //継承元をコール
-        enchant.Sprite.call(this,5, 5);
-        this.backgroundColor = "yellow";
+        enchant.Sprite.call(this, 16, 16);
         this.x    = x; //x座標
         this.y    = y; //y座標
         this.down = 2; //落下速度
+        this.image = core.assets['icon0.png'];
+        this.frame = 14;
         core.rootScene.addChild(this);
         // 「enterframe」イベントリスナ
         this.addEventListener('enterframe', function(e) {
